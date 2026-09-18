@@ -61,7 +61,7 @@ CLASS zcl_api_http_client IMPLEMENTATION.
   METHOD get.
 
     TRY.
-        DATA(lo_destination) = NEW zcl_s4_reg_info_dest( )->zif_s4_reg_info_dest~get_destination( ).
+        DATA(lo_destination) = zcl_s4_reg_info_dest_factory=>create( )->get_destination( ).
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_destination ).
 
         DATA(lo_request) = lo_http_client->get_http_request( ).
@@ -101,7 +101,7 @@ CLASS zcl_api_http_client IMPLEMENTATION.
   METHOD execute_write.
 
     TRY.
-        DATA(lo_destination) = NEW zcl_s4_reg_info_dest( )->zif_s4_reg_info_dest~get_destination( ).
+        DATA(lo_destination) = zcl_s4_reg_info_dest_factory=>create( )->get_destination( ).
         DATA(lo_http_client) = cl_web_http_client_manager=>create_by_http_destination( lo_destination ).
 
         " 1) Ciclo CSRF - misma instancia de cliente conserva las cookies

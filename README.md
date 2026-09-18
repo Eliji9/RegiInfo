@@ -26,3 +26,16 @@ antes hecho vía ME12/`ZMM_CHANGE_CONDITION_INFO`.
   `PURCHASINGINFORECORD`/`PURCHASINGORGANIZATION`/`PLANT`).
 - Sintaxis exacta de navegación de `XCO_CP_JSON` para parsear la
   respuesta OData V2 (envuelta en `{"d": {...}}`).
+
+## Actualización — patrón Tier 2 completo
+
+Se agregó `src/zcl_s4_reg_info_dest_factory.clas.abap`, la clase factory
+que junto con `zif_s4_reg_info_dest.intf.abap` es lo único que el código
+ABAP Cloud consumidor referencia. `zcl_s4_reg_info_dest.clas.abap` (la
+implementación concreta) permanece sin liberar, según el patrón
+documentado por SAP:
+https://developers.sap.com/tutorials/abap-s4hanacloud-purchasereq-create-wrapper
+
+Al liberar en el sistema real: Release Contract C1 (System-Internal Use)
++ "Use in Cloud Development" sobre la interfaz y la clase factory
+únicamente.
