@@ -141,3 +141,38 @@ mismo problema de casing sin mapping explícito
 (`camel_case` los habría mandado como `Isdeleted`/`Ismarkedfordeletion`
 en vez de `IsDeleted`/`IsMarkedForDeletion`). Agregados ambos al
 `name_mapping` de `CREATE_JSON`.
+
+## Corrección importante — deserialización de la respuesta exitosa (201)
+
+Confirmado con prueba real (ver bitácora abajo): la respuesta exitosa
+de `A_PurchasingInfoRecord` viene envuelta en `{"d": {...}}` con todos
+los campos de `TY_INFO_RECORD`, incluyendo `PurchasingInfoRecord`
+asignado, `IsDeleted`, etc.
+
+Se corrigió `CREATE_INFO_RECORD`: en vez de asumir que `TY_ODATA_RESPONSE`
+(el tipo ya usado para parsear errores) también tiene un componente
+`d`, se usa un tipo local dedicado solo para el caso de éxito
+(`ty_create_response`, con `d TYPE ty_info_record`) - evita depender de
+una suposición no verificada sobre `TY_ODATA_RESPONSE`.
+
+También se reordenó el manejo de error: si el status no es `201`, se
+intenta parsear igual como `TY_ODATA_RESPONSE` para extraer
+`code`/`message`/`target` reales del error de negocio (como el
+`06/718` que vimos), en vez de solo devolver el body crudo.
+
+### Confirmación de NetPriceAmount
+No hacía falta agregar nada nuevo - `TY_INFO_REC_ORG_PLAN_DATA` ya
+tiene el campo `netpriceamount`, y el `name_mapping` de `CREATE_JSON`
+ya lo mapea a `NetPriceAmount`. Se confirma con prueba real (POST con
+`"NetPriceAmount": "1"` incluido) que llegó a `201 Created` con
+respuesta completa:
+```json
+{
+  "PurchasingInfoRecord": "5300000523",
+  "Supplier": "10122",
+  "Material": "100023",
+  "IsDeleted": false,
+  "BaseUnit": "PI",
+  ...
+}
+```

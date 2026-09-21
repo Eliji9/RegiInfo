@@ -231,40 +231,56 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
     ENDIF.
 
     IF lv_status <> 201.
-      APPEND VALUE #( code = |HTTP_{ lv_status }| message = lv_response ) TO rt_error.
+      " Error: usa TY_ODATA_RESPONSE (ya probado para el parseo de
+      " errores - confirmado que tiene el nodo ERROR con code/message/target).
+      DATA ls_odata_response TYPE ty_odata_response.
+
+      TRY.
+          /ui2/cl_json=>deserialize(
+            EXPORTING json = lv_response
+            CHANGING  data = ls_odata_response ).
+        CATCH cx_root.
+          APPEND VALUE ty_error(
+            code    = |{ lv_status }|
+            message = lv_response
+            target  = 'HTTP_RESPONSE'
+          ) TO rt_error.
+          RETURN.
+      ENDTRY.
+
+      IF ls_odata_response-error-code IS NOT INITIAL.
+        APPEND VALUE ty_error(
+          code       = ls_odata_response-error-code
+          message    = ls_odata_response-error-message
+          target     = ls_odata_response-error-target
+          innererror = lv_response
+        ) TO rt_error.
+      ELSE.
+        APPEND VALUE #( code = |HTTP_{ lv_status }| message = lv_response ) TO rt_error.
+      ENDIF.
       RETURN.
     ENDIF.
 
-    " Mismo patrón que ya usas para el parseo de errores: deserializar
-    " con /UI2/CL_JSON sobre TY_ODATA_RESPONSE.
-    DATA ls_odata_response TYPE ty_odata_response.
+    " Éxito (201): la respuesta OData V2 confirmada por prueba real
+    " (ver tests/gw_client_tests.md) viene como {"d": {...con todos los
+    " campos de TY_INFO_RECORD...}}. Se usa un tipo local dedicado en
+    " vez de asumir que TY_ODATA_RESPONSE tiene un componente "d" -
+    " ese tipo solo se confirmó con el nodo ERROR, no con el de éxito.
+    TYPES: BEGIN OF ty_create_response,
+             d TYPE ty_info_record,
+           END OF ty_create_response.
+    DATA ls_create_response TYPE ty_create_response.
 
     TRY.
         /ui2/cl_json=>deserialize(
           EXPORTING json = lv_response
-          CHANGING  data = ls_odata_response ).
-      CATCH cx_root.
-        APPEND VALUE ty_error(
-          code    = |{ lv_status }|
-          message = lv_response
-          target  = 'HTTP_RESPONSE'
-        ) TO rt_error.
+          CHANGING  data = ls_create_response ).
+      CATCH cx_root INTO DATA(lx_parse_error).
+        APPEND VALUE #( message = lx_parse_error->get_text( ) ) TO rt_error.
         RETURN.
     ENDTRY.
 
-    IF ls_odata_response-error-code IS NOT INITIAL.
-      APPEND VALUE ty_error(
-        code       = ls_odata_response-error-code
-        message    = ls_odata_response-error-message
-        target     = ls_odata_response-error-target
-        innererror = lv_response
-      ) TO rt_error.
-      RETURN.
-    ENDIF.
-
-    " TODO: confirmar el nombre real del componente que contiene el
-    " payload exitoso en TY_ODATA_RESPONSE (asumido "d", estándar OData V2).
-    ev_po_response          = ls_odata_response-d.
+    ev_po_response          = ls_create_response-d.
     ev_purchasinginforecord = ev_po_response-purchasinginforecord.
   ENDMETHOD.
 
