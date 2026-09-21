@@ -352,8 +352,8 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
     " 1) Validar existencia - equivalente a BAPI_INFORECORD_GETLIST
     "    + el SELECT sobre EINE del ECC.
     DATA(lv_existing) = exists_info_record(
-      iv_supplier = is_update_info_record-supplier
-      iv_material = is_update_info_record-material
+      iv_supplier = CONV lifnr( is_update_info_record-supplier )
+      iv_material = CONV matnr( is_update_info_record-material )
       iv_ekorg    = iv_ekorg
       iv_werks    = iv_werks ).
 

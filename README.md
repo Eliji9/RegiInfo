@@ -81,3 +81,11 @@ Replica la lógica del reporte ECC original (`ZMM_BAPI_PO_CREATE`):
 
 Este es el método público a invocar desde el consumidor final en vez de
 llamar `CREATE_INFO_RECORD`/`UPDATE_INFO_RECORD` por separado.
+
+## Corrección — UPSERT_INFO_RECORD: incompatibilidad de tipos STRING/LIFNR-MATNR
+
+`IS_UPDATE_INFO_RECORD-SUPPLIER`/`-MATERIAL` son `STRING` (así está
+tipada toda `TY_UPDATE_INFO_RECORD`), pero `EXISTS_INFO_RECORD` espera
+`LIFNR`/`MATNR`. Se agregó `CONV lifnr(...)` / `CONV matnr(...)` en la
+llamada dentro de `UPSERT_INFO_RECORD` en vez de debilitar el tipado de
+`EXISTS_INFO_RECORD`.
