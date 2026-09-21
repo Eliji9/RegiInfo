@@ -27,6 +27,15 @@ CLASS zcl_api_pur_info_record DEFINITION
                 ev_po_response            TYPE ty_info_record
       RETURNING VALUE(rt_error)           TYPE tt_error.
 
+    "! /UI2/CL_JSON falla (CX_SXML_PARSE_ERROR) al deserializar un
+    "! booleano JSON crudo (true/false sin comillas) hacia un campo
+    "! ABAP tipado STRING - varios campos de esta API son asi
+    "! (InvoiceIsGoodsReceiptBased, IsDeleted, etc.). Este metodo
+    "! entrecomilla esos literales antes de deserializar.
+    CLASS-METHODS sanitize_json_booleans
+      IMPORTING iv_json          TYPE string
+      RETURNING VALUE(rv_json)   TYPE string.
+
     CLASS-METHODS create_json
       IMPORTING it_pricingcndnrecdscale   TYPE tt_pricingcndnrecdscale OPTIONAL
                 it_recdsuplmntprcgcndn    TYPE tt_recdsuplmntprcgcndn OPTIONAL
@@ -254,7 +263,7 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
 
       TRY.
           /ui2/cl_json=>deserialize(
-            EXPORTING json = lv_response
+            EXPORTING json = sanitize_json_booleans( lv_response )
             CHANGING  data = ls_odata_response ).
         CATCH cx_root.
           APPEND VALUE ty_error(
@@ -292,7 +301,7 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
 
     TRY.
         /ui2/cl_json=>deserialize(
-          EXPORTING json = lv_response
+          EXPORTING json = sanitize_json_booleans( lv_response )
           CHANGING  data = ls_create_response ).
       CATCH cx_root INTO DATA(lx_parse_error).
         APPEND VALUE #( message = lx_parse_error->get_text( ) ) TO rt_error.
@@ -455,6 +464,20 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
         IMPORTING ev_purchasinginforecord   = ev_purchasinginforecord
                   ev_po_response            = ls_po_response ).
     ENDIF.
+  ENDMETHOD.
+
+
+  METHOD sanitize_json_booleans.
+    rv_json = replace(
+      val   = iv_json
+      regex = `:\s*true\b`
+      with  = `:"true"`
+      occ   = 0 ).
+    rv_json = replace(
+      val   = rv_json
+      regex = `:\s*false\b`
+      with  = `:"false"`
+      occ   = 0 ).
   ENDMETHOD.
 
 ENDCLASS.

@@ -206,3 +206,19 @@ Se eliminaron esos parámetros de `UPSERT_INFO_RECORD`. Ahora se leen
 de la primera fila de `IT_INFO_REC_ORG_PLAN_DATA` (que pasa a ser
 obligatoria, no `OPTIONAL`, ya que sin ella no hay de dónde derivar
 org/planta). El resto de la firma no cambia.
+
+## Corrección importante — CX_SXML_PARSE_ERROR al deserializar booleanos JSON
+
+Confirmado con prueba real (GET a `A_PurgInfoRecdOrgPlantData`): varios
+campos de la API son booleanos JSON genuinos sin comillas
+(`"InvoiceIsGoodsReceiptBased": true`), pero los campos ABAP
+correspondientes (`TY_INFO_REC_ORG_PLAN_DATA` y similares) están
+tipados `STRING`. `/UI2/CL_JSON=>DESERIALIZE` no convierte solo un
+booleano crudo hacia un campo STRING - lanza `CX_SXML_PARSE_ERROR`.
+
+Se agregó el método privado `SANITIZE_JSON_BOOLEANS`, que entrecomilla
+los literales `true`/`false` sin comillas en el JSON crudo antes de
+deserializar (vía regex sobre `:\s*true\b` / `:\s*false\b`). Se aplica
+en ambos puntos de deserialización de `CREATE_INFO_RECORD` (error y
+éxito). `GET_INFO_RECORD_LIST` no lo necesita - usa `SELECT` local, sin
+JSON de por medio.
