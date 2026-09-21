@@ -100,3 +100,10 @@ con lo que ya está tipado así en el sistema real
 `CONV string(...)` en la llamada a `UPDATE_INFO_RECORD` dentro de
 `UPSERT_INFO_RECORD`, mismo patrón que la corrección anterior
 (`IV_PURCHASINGINFORECORD` es `STRING` en `UPDATE_INFO_RECORD`).
+
+## Corrección — IV_EKORG/IV_WERKS: EKORG/WERKS_D vs STRING
+
+Mismo patrón otra vez: `UPSERT_INFO_RECORD` tiene `iv_ekorg`/`iv_werks`
+tipados por dominio (`EKORG`/`WERKS_D`), pero `UPDATE_INFO_RECORD` los
+espera como `STRING`. Se agregó `CONV string(...)` en ambos, en la
+llamada dentro de `UPSERT_INFO_RECORD`.

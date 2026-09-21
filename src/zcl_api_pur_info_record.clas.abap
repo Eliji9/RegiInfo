@@ -376,8 +376,8 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
 
       rt_error = update_info_record(
         iv_purchasinginforecord = CONV string( lv_existing )
-        iv_ekorg                = iv_ekorg
-        iv_werks                = iv_werks
+        iv_ekorg                = CONV string( iv_ekorg )
+        iv_werks                = CONV string( iv_werks )
         iv_aplfz                = iv_aplfz
         iv_netpr                = iv_netpr
         iv_mwskz                = iv_mwskz ).
