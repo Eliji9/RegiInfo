@@ -176,3 +176,20 @@ respuesta completa:
   ...
 }
 ```
+
+## Corrección importante — TY_ODATA_RESPONSE no existía en la clase
+
+`TY_ODATA_RESPONSE` nunca estuvo declarado en `ZCL_API_PUR_INFO_RECORD`
+- el código visto en pantalla que lo usaba venía de otra clase abierta
+en el mismo editor (`ZCL_API_PURCHASE_ORDER` / `ZCL_API_MATERIAL_DOCUMENT`).
+Se declaró correctamente en `PRIVATE SECTION`, con la forma real
+confirmada por la prueba del error `06/718`:
+
+```json
+{"error": {"code": "...", "message": {"lang": "es", "value": "..."}}}
+```
+
+Importante: `message` es un objeto (`lang`/`value`), no un string
+plano - se corrigió el acceso a `ls_odata_response-error-message-value`.
+No se confirmó un nodo `target` en el envelope de error real, así que
+se quitó esa asignación (quedaba vacía siempre).

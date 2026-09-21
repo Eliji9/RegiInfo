@@ -87,6 +87,25 @@ CLASS zcl_api_pur_info_record DEFINITION
 
   PRIVATE SECTION.
 
+    "! Estructura del envelope de ERROR de OData V2, confirmada con
+    "! prueba real (ver tests/gw_client_tests.md, error 06/718):
+    "! {"error": {"code": "...", "message": {"lang": "es", "value": "..."}}}.
+    "! NO existia TY_ODATA_RESPONSE en esta clase pese a que el codigo
+    "! visto en pantalla lo usaba - venia de otra clase abierta.
+    TYPES: BEGIN OF ty_odata_error_message,
+             lang  TYPE string,
+             value TYPE string,
+           END OF ty_odata_error_message.
+
+    TYPES: BEGIN OF ty_odata_error,
+             code    TYPE string,
+             message TYPE ty_odata_error_message,
+           END OF ty_odata_error.
+
+    TYPES: BEGIN OF ty_odata_response,
+             error TYPE ty_odata_error,
+           END OF ty_odata_response.
+
     "! Fila plana para GET_INFO_RECORD_LIST / EXISTS_INFO_RECORD -
     "! TY_INFO_RECORD es anidado (org/planta va en un array interno),
     "! no sirve como destino de un SELECT plano con INTO CORRESPONDING.
@@ -249,10 +268,12 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       ENDTRY.
 
       IF ls_odata_response-error-code IS NOT INITIAL.
+        " NOTA: el envelope de error confirmado (06/718) no trae nodo
+        " "target" propio - solo code y message-value. innererror se
+        " deja con el body crudo por si hace falta inspeccionarlo.
         APPEND VALUE ty_error(
           code       = ls_odata_response-error-code
-          message    = ls_odata_response-error-message
-          target     = ls_odata_response-error-target
+          message    = ls_odata_response-error-message-value
           innererror = lv_response
         ) TO rt_error.
       ELSE.
