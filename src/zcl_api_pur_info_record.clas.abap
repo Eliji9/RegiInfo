@@ -50,7 +50,7 @@ CLASS zcl_api_pur_info_record DEFINITION
 
     CLASS-METHODS get_info_record_list
       IMPORTING is_update_info_record TYPE ty_update_info_record
-      RETURNING VALUE(rt_info_record) TYPE tt_info_record.
+      RETURNING VALUE(rt_info_record) TYPE STANDARD TABLE OF ty_info_record WITH EMPTY KEY.
 
     CLASS-METHODS exists_info_record
       IMPORTING iv_supplier                    TYPE lifnr
