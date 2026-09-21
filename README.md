@@ -58,3 +58,13 @@ extender el mapping a otros campos usados en producción.
 **Pendiente de confirmar:** el nombre del componente que contiene el
 payload exitoso en `TY_ODATA_RESPONSE` (asumido `d`, estándar OData V2)
 para completar `ev_po_response` / `ev_purchasinginforecord`.
+
+## Corrección — GET_INFO_RECORD_LIST devolvía TY_INFO_RECORD (anidado)
+
+`TY_INFO_RECORD` no tiene `purchasingorganization`/`plant`/`purchasinggroup`
+/`currency`/`materialplanneddeliverydurn` como campos planos (van dentro
+del nodo anidado `to_purginforecdorgplantdata`), por lo que el
+`SELECT ... INTO CORRESPONDING FIELDS OF TABLE` fallaba en activación.
+Se agregó un tipo propio `TY_INFO_RECORD_ROW` (y su tabla
+`TT_INFO_RECORD_ROW`), plano, solo con los campos que esta consulta
+local trae. `GET_INFO_RECORD_LIST` ahora devuelve `TT_INFO_RECORD_ROW`.

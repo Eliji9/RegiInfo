@@ -45,7 +45,7 @@ CLASS zcl_api_pur_info_record DEFINITION
                 material                 TYPE matnr
                 purchasingorganization   TYPE ekorg
                 plant                    TYPE werks_d OPTIONAL
-      RETURNING VALUE(rt_info_record)    TYPE STANDARD TABLE OF ty_info_record WITH EMPTY KEY.
+      RETURNING VALUE(rt_info_record)    TYPE tt_info_record_row.
 
     CLASS-METHODS exists_info_record
       IMPORTING iv_supplier                    TYPE lifnr
@@ -64,6 +64,22 @@ CLASS zcl_api_pur_info_record DEFINITION
       RETURNING VALUE(rt_error)         TYPE tt_error.
 
   PRIVATE SECTION.
+
+    "! Fila plana para GET_INFO_RECORD_LIST / EXISTS_INFO_RECORD -
+    "! TY_INFO_RECORD es anidado (org/planta va en un array interno),
+    "! no sirve como destino de un SELECT plano con INTO CORRESPONDING.
+    TYPES: BEGIN OF ty_info_record_row,
+             purchasinginforecord        TYPE ebeln,
+             supplier                    TYPE lifnr,
+             material                    TYPE matnr,
+             purchasingorganization      TYPE ekorg,
+             plant                       TYPE werks_d,
+             purchasinggroup             TYPE ekgrp,
+             currency                    TYPE waers,
+             materialplanneddeliverydurn TYPE dec3_0,
+           END OF ty_info_record_row.
+    TYPES tt_info_record_row TYPE STANDARD TABLE OF ty_info_record_row WITH EMPTY KEY.
+
 
     "! (Ya existentes en tu clase - se mantienen: C_DESTINATION
     "! 'S4_REG_INFO', C_URI_HEADER, C_URI_ORG_PLANT)
