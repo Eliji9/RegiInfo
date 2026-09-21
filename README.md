@@ -131,3 +131,13 @@ borrar" - el ECC limpiaba `LOEKZ` de forma incondicional en cada
 pasa `iv_isdeleted`, el default de `ABAP_BOOL` (`abap_false`) ya
 produce `"IsDeleted": false`, que es el comportamiento correcto por
 defecto (mantener el registro activo).
+
+## Corrección — faltaba IsDeleted/IsMarkedForDeletion en el name_mapping de CREATE_JSON
+
+`ISDELETED` (cabecera, `TY_INFO_RECORD`/`TY_UPDATE_INFO_RECORD`) y
+`ISMARKEDFORDELETION` (nodo org/planta, confirmado en la vista CDS
+`I_PURGINFORECDORGPLANTDATA`) son dos campos distintos que sufrían el
+mismo problema de casing sin mapping explícito
+(`camel_case` los habría mandado como `Isdeleted`/`Ismarkedfordeletion`
+en vez de `IsDeleted`/`IsMarkedForDeletion`). Agregados ambos al
+`name_mapping` de `CREATE_JSON`.

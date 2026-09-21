@@ -182,6 +182,8 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       ( abap = 'TAXCODE'                      json = 'TaxCode' )
       ( abap = 'NETPRICEAMOUNT'               json = 'NetPriceAmount' )
       ( abap = 'PURGDOCORDERQUANTITYUNIT'     json = 'PurgDocOrderQuantityUnit' )
+      ( abap = 'ISDELETED'                     json = 'IsDeleted' )
+      ( abap = 'ISMARKEDFORDELETION'           json = 'IsMarkedForDeletion' )
       ( abap = 'TO_PURGINFORECDORGPLANTDATA'  json = 'to_PurgInfoRecdOrgPlantData' )
     ).
     " TODO: extender lt_name_mapping con cualquier otro campo que
