@@ -67,20 +67,18 @@ CLASS zcl_api_pur_info_record DEFINITION
     "! Orquestador: replica la lógica del ECC (BAPI_INFORECORD_GETLIST
     "! + ME_UPDATE_INFORECORD / ME_DIRECT_INPUT_INFORECORD) -
     "! valida existencia y decide crear o actualizar.
+    "! iv_ekorg/iv_werks/iv_aplfz/iv_netpr/iv_mwskz/iv_isdeleted NO se
+    "! piden aparte - se derivan de la primera fila de
+    "! IT_INFO_REC_ORG_PLAN_DATA (ese dato ya vive ahí; pedirlo dos
+    "! veces permitía que quedaran inconsistentes entre sí).
     CLASS-METHODS upsert_info_record
       IMPORTING it_pricingcndnrecdscale   TYPE tt_pricingcndnrecdscale OPTIONAL
                 it_recdsuplmntprcgcndn    TYPE tt_recdsuplmntprcgcndn OPTIONAL
                 it_info_rec_prcgcndn      TYPE tt_info_rec_prcgcndn OPTIONAL
                 it_info_rec_prcg_validity TYPE tt_info_rec_prcg_validity OPTIONAL
-                it_info_rec_org_plan_data TYPE tt_info_rec_org_plan_data OPTIONAL
+                it_info_rec_org_plan_data TYPE tt_info_rec_org_plan_data
                 it_info_rec_text          TYPE tt_info_rec_text OPTIONAL
                 is_update_info_record     TYPE ty_update_info_record
-                iv_ekorg                  TYPE ekorg
-                iv_werks                  TYPE werks_d OPTIONAL
-                iv_aplfz                  TYPE string OPTIONAL
-                iv_netpr                  TYPE string OPTIONAL
-                iv_mwskz                  TYPE string OPTIONAL
-                iv_isdeleted              TYPE abap_bool OPTIONAL
       EXPORTING ev_purchasinginforecord   TYPE infnr
                 ev_created                TYPE abap_bool
       RETURNING VALUE(rt_error)           TYPE tt_error.
@@ -411,13 +409,21 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
   METHOD upsert_info_record.
     CLEAR: ev_purchasinginforecord, ev_created, rt_error.
 
+    " Los datos de org/planta se derivan de la primera fila de la
+    " tabla - no se piden aparte para evitar que queden inconsistentes.
+    READ TABLE it_info_rec_org_plan_data INTO DATA(ls_org_plan) INDEX 1.
+    IF sy-subrc <> 0.
+      APPEND VALUE #( message = 'IT_INFO_REC_ORG_PLAN_DATA no puede venir vacía' ) TO rt_error.
+      RETURN.
+    ENDIF.
+
     " 1) Validar existencia - equivalente a BAPI_INFORECORD_GETLIST
     "    + el SELECT sobre EINE del ECC.
     DATA(lv_existing) = exists_info_record(
       iv_supplier = CONV lifnr( is_update_info_record-supplier )
       iv_material = CONV matnr( is_update_info_record-material )
-      iv_ekorg    = iv_ekorg
-      iv_werks    = iv_werks ).
+      iv_ekorg    = CONV ekorg( ls_org_plan-purchasingorganization )
+      iv_werks    = CONV werks_d( ls_org_plan-plant ) ).
 
     IF lv_existing IS NOT INITIAL.
       " 2a) Ya existe - equivalente a ME_UPDATE_INFORECORD.
@@ -426,12 +432,12 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
 
       rt_error = update_info_record(
         iv_purchasinginforecord = CONV string( lv_existing )
-        iv_ekorg                = CONV string( iv_ekorg )
-        iv_werks                = CONV string( iv_werks )
-        iv_aplfz                = iv_aplfz
-        iv_netpr                = iv_netpr
-        iv_mwskz                = iv_mwskz
-        iv_isdeleted             = iv_isdeleted ).
+        iv_ekorg                = ls_org_plan-purchasingorganization
+        iv_werks                = ls_org_plan-plant
+        iv_aplfz                = ls_org_plan-materialplanneddeliverydurn
+        iv_netpr                = ls_org_plan-netpriceamount
+        iv_mwskz                = ls_org_plan-taxcode
+        iv_isdeleted             = xsdbool( ls_org_plan-ismarkedfordeletion = abap_true ) ).
     ELSE.
       " 2b) No existe - equivalente a ME_INITIALIZE_INFORECORD +
       "     ME_DIRECT_INPUT_INFORECORD + ME_POST_INFORECORD.

@@ -193,3 +193,16 @@ Importante: `message` es un objeto (`lang`/`value`), no un string
 plano - se corrigió el acceso a `ls_odata_response-error-message-value`.
 No se confirmó un nodo `target` en el envelope de error real, así que
 se quitó esa asignación (quedaba vacía siempre).
+
+## Corrección — parámetros redundantes en UPSERT_INFO_RECORD
+
+`iv_ekorg`/`iv_werks`/`iv_aplfz`/`iv_netpr`/`iv_mwskz`/`iv_isdeleted`
+ya existían dentro de `it_info_rec_org_plan_data` (como
+`purchasingorganization`/`plant`/`materialplanneddeliverydurn`/
+`netpriceamount`/`taxcode`/`ismarkedfordeletion`) - pedirlos aparte
+permitía que quedaran inconsistentes entre sí.
+
+Se eliminaron esos parámetros de `UPSERT_INFO_RECORD`. Ahora se leen
+de la primera fila de `IT_INFO_REC_ORG_PLAN_DATA` (que pasa a ser
+obligatoria, no `OPTIONAL`, ya que sin ella no hay de dónde derivar
+org/planta). El resto de la firma no cambia.
