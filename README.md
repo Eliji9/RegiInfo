@@ -5,19 +5,26 @@ Migración a S/4HANA Cloud Private (ABAP Cloud) del reporte clásico
 (EINA/EINE), incluyendo el seteo de `APLFZ` (Planned Delivery Time),
 antes hecho vía ME12/`ZMM_CHANGE_CONDITION_INFO`.
 
-## Objetos
+## Objeto
 
-- `src/zif_s4_reg_info_dest.intf.abap` — interfaz liberada (C1) del
-  wrapper de destino SM59.
-- `src/zcl_s4_reg_info_dest.clas.abap` — implementación del wrapper
-  (language version Standard, fuera de ABAP for Cloud Development).
-  Resuelve el destino SM59 `S4_REG_INFO`.
-- `src/zcl_api_http_client.clas.abap` — cliente HTTP genérico ABAP
-  Cloud, con manejo de token CSRF para escritura OData V2.
-- `src/zcl_api_pur_info_record_methods.abap` — métodos a incorporar en
-  `ZCL_API_PUR_INFO_RECORD` (ya existente en el sistema): `CREATE_JSON`,
-  `CREATE_INFO_RECORD`, `GET_INFO_RECORD_LIST`, `EXISTS_INFO_RECORD`,
-  `UPDATE_INFO_RECORD`, contra `API_INFORECORD_PROCESS_SRV`.
+- `src/zcl_api_pur_info_record.clas.abap` — clase única y consolidada
+  (decisión explícita: sin wrapper interfaz/factory separado) con:
+  - Resolución del destino SM59 `S4_REG_INFO` (método privado
+    `GET_DESTINATION`, vía `CL_OUTBOUND_PROVIDER_HTTP`)
+  - Cliente HTTP con ciclo CSRF para OData V2 (métodos privados
+    `HTTP_GET` / `HTTP_POST` / `HTTP_PATCH`)
+  - Lógica de negocio: `CREATE_JSON`, `CREATE_INFO_RECORD`,
+    `GET_INFO_RECORD_LIST`, `EXISTS_INFO_RECORD`, `UPDATE_INFO_RECORD`
+    contra `API_INFORECORD_PROCESS_SRV`
+
+## Nota de compliance ABAP Cloud
+
+`GET_DESTINATION` llama a `CL_OUTBOUND_PROVIDER_HTTP=>create_by_destination()`,
+API no liberada para ABAP for Cloud Development. Al no usarse el patrón
+de wrapper formal (interfaz + factory liberadas / implementación sin
+liberar), esta clase requiere una **exención de ATC** sobre esa llamada
+puntual para pasar el chequeo "Cloud Development" — marcado con `"#EC`
+en el código como placeholder del pragma real.
 
 ## Pendiente de verificar en sistema real
 
@@ -26,16 +33,3 @@ antes hecho vía ME12/`ZMM_CHANGE_CONDITION_INFO`.
   `PURCHASINGINFORECORD`/`PURCHASINGORGANIZATION`/`PLANT`).
 - Sintaxis exacta de navegación de `XCO_CP_JSON` para parsear la
   respuesta OData V2 (envuelta en `{"d": {...}}`).
-
-## Actualización — patrón Tier 2 completo
-
-Se agregó `src/zcl_s4_reg_info_dest_factory.clas.abap`, la clase factory
-que junto con `zif_s4_reg_info_dest.intf.abap` es lo único que el código
-ABAP Cloud consumidor referencia. `zcl_s4_reg_info_dest.clas.abap` (la
-implementación concreta) permanece sin liberar, según el patrón
-documentado por SAP:
-https://developers.sap.com/tutorials/abap-s4hanacloud-purchasereq-create-wrapper
-
-Al liberar en el sistema real: Release Contract C1 (System-Internal Use)
-+ "Use in Cloud Development" sobre la interfaz y la clase factory
-únicamente.
