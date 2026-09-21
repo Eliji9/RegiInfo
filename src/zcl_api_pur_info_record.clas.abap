@@ -339,13 +339,15 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
     IF iv_mwskz IS NOT INITIAL.
       APPEND |"TaxCode": "{ iv_mwskz }"| TO lt_field.
     ENDIF.
-    " Equivalente al LOEKZ del ECC (it_eina-loekz / it_eine-loekz) -
-    " en la API es el campo booleano IsDeleted. Solo se envia cuando
-    " se pide explicitamente marcar el borrado (ABAP_BOOL no distingue
-    " "no pasado" de "false", asi que no se manda false automatico).
-    IF iv_isdeleted = abap_true.
-      APPEND |"IsDeleted": true| TO lt_field.
-    ENDIF.
+    " Equivalente al LOEKZ del ECC (it_eina-loekz / it_eine-loekz):
+    " en el ECC se limpiaba incondicionalmente en cada actualizacion
+    " (it_eina-loekz = '' / it_eine-loekz = ''). Aqui se replica igual:
+    " se manda SIEMPRE, no solo cuando se pide explicito. Si el
+    " llamador no especifica iv_isdeleted, el valor por defecto de
+    " ABAP_BOOL (abap_false) ya coincide con el comportamiento
+    " deseado ("no borrado"), asi que no hace falta distinguir
+    " "no pasado" de "false" en este caso.
+    APPEND |"IsDeleted": { COND string( WHEN iv_isdeleted = abap_true THEN `true` ELSE `false` ) }| TO lt_field.
 
     DATA(lv_body) = |\{ { concat_lines_of( table = lt_field sep = `, ` ) } \}|.
 

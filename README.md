@@ -121,3 +121,13 @@ y se propagó a través de `UPSERT_INFO_RECORD`. Solo se envía
 no se manda `false` automáticamente cuando el parámetro simplemente no
 se pasa (`ABAP_BOOL` no distingue "no pasado" de "false": ambos son el
 valor inicial `' '`).
+
+## Ajuste — IsDeleted se manda SIEMPRE en cada update (no condicional)
+
+Corrección sobre la entrada anterior: no es "solo cuando se pide
+borrar" - el ECC limpiaba `LOEKZ` de forma incondicional en cada
+`ME_UPDATE_INFORECORD`. Ahora `UPDATE_INFO_RECORD` manda
+`"IsDeleted": true/false` en TODA actualización. Si el llamador no
+pasa `iv_isdeleted`, el default de `ABAP_BOOL` (`abap_false`) ya
+produce `"IsDeleted": false`, que es el comportamiento correcto por
+defecto (mantener el registro activo).
