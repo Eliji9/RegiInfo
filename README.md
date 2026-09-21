@@ -38,3 +38,23 @@ si es código de otro objeto pegado como plantilla.
 - Valores reales de `C_URI_HEADER` / `C_URI_ORG_PLANT` (ya existentes
   en la clase; se asume que apuntan a `A_PurchasingInfoRecord` y
   `A_PurgInfoRecdOrgPlantData` respectivamente).
+
+## Actualización — JSON con /UI2/CL_JSON (no XCO_CP_JSON)
+
+Se reemplazó `XCO_CP_JSON` por `/UI2/CL_JSON`, ya usado en el sistema
+real para deserializar la respuesta (`TY_ODATA_RESPONSE`). Para la
+serialización de salida se usa `pretty_name = camel_case` +
+`name_mappings` explícito solo para los campos críticos del flujo
+(Supplier, Material, PurchasingOrganization, Plant,
+MaterialPlannedDeliveryDurn, NetPriceAmount, TaxCode, Currency,
+PurchasingGroup).
+
+**Riesgo señalado, no resuelto automáticamente:** los campos ABAP están
+declarados sin guion bajo (`materialplanneddeliverydurn`), por lo que
+`camel_case` no puede reconstruir el PascalCase real de OData sin la
+ayuda del `name_mapping`. Verificar en el sistema si además falta
+extender el mapping a otros campos usados en producción.
+
+**Pendiente de confirmar:** el nombre del componente que contiene el
+payload exitoso en `TY_ODATA_RESPONSE` (asumido `d`, estándar OData V2)
+para completar `ev_po_response` / `ev_purchasinginforecord`.

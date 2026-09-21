@@ -123,7 +123,25 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       APPEND ls_org_plan_json TO ls_info_record-to_purginforecdorgplantdata-results.
     ENDLOOP.
 
-    rv_json_string = xco_cp_json=>data->from_abap( ls_info_record )->to_string( ).
+    DATA(lt_name_mapping) = VALUE /ui2/cl_json=>name_mappings(
+      ( abap = 'SUPPLIER'                    json = 'Supplier' )
+      ( abap = 'MATERIAL'                    json = 'Material' )
+      ( abap = 'PURCHASINGORGANIZATION'      json = 'PurchasingOrganization' )
+      ( abap = 'PLANT'                       json = 'Plant' )
+      ( abap = 'MATERIALPLANNEDDELIVERYDURN' json = 'MaterialPlannedDeliveryDurn' )
+      ( abap = 'NETPRICEAMOUNT'              json = 'NetPriceAmount' )
+      ( abap = 'TAXCODE'                     json = 'TaxCode' )
+      ( abap = 'CURRENCY'                    json = 'Currency' )
+      ( abap = 'PURCHASINGGROUP'             json = 'PurchasingGroup' )
+    ).
+    " TODO: extender lt_name_mapping con cualquier otro campo que
+    " confirmes necesario para el POST real, siguiendo el mismo patrón.
+
+    rv_json_string = /ui2/cl_json=>serialize(
+      data         = ls_info_record
+      compress     = abap_true
+      pretty_name  = /ui2/cl_json=>pretty_mode-camel_case
+      name_mappings = lt_name_mapping ).
   ENDMETHOD.
 
 
@@ -165,16 +183,37 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    " TODO: confirmar sintaxis exacta de navegación de XCO_CP_JSON en tu
-    " release (respuesta OData V2 envuelta en {"d": {...}}).
+    " Mismo patrón que ya usas para el parseo de errores: deserializar
+    " con /UI2/CL_JSON sobre TY_ODATA_RESPONSE.
+    DATA ls_odata_response TYPE ty_odata_response.
+
     TRY.
-        xco_cp_json=>data->from_string( lv_response )
-          ->member( 'd' )
-          ->write_to( REF #( ev_po_response ) ).
-        ev_purchasinginforecord = ev_po_response-purchasinginforecord.
-      CATCH cx_root INTO DATA(lx_parse_error).
-        APPEND VALUE #( message = lx_parse_error->get_text( ) ) TO rt_error.
+        /ui2/cl_json=>deserialize(
+          EXPORTING json = lv_response
+          CHANGING  data = ls_odata_response ).
+      CATCH cx_root.
+        APPEND VALUE ty_error(
+          code    = |{ lv_status }|
+          message = lv_response
+          target  = 'HTTP_RESPONSE'
+        ) TO rt_error.
+        RETURN.
     ENDTRY.
+
+    IF ls_odata_response-error-code IS NOT INITIAL.
+      APPEND VALUE ty_error(
+        code       = ls_odata_response-error-code
+        message    = ls_odata_response-error-message
+        target     = ls_odata_response-error-target
+        innererror = lv_response
+      ) TO rt_error.
+      RETURN.
+    ENDIF.
+
+    " TODO: confirmar el nombre real del componente que contiene el
+    " payload exitoso en TY_ODATA_RESPONSE (asumido "d", estándar OData V2).
+    ev_po_response          = ls_odata_response-d.
+    ev_purchasinginforecord = ev_po_response-purchasinginforecord.
   ENDMETHOD.
 
 
