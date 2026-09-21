@@ -36,6 +36,14 @@ CLASS zcl_api_pur_info_record DEFINITION
       IMPORTING iv_json          TYPE string
       RETURNING VALUE(rv_json)   TYPE string.
 
+    "! Inverso de SANITIZE_JSON_BOOLEANS: los campos ABAP son STRING
+    "! con valores 'true'/'false', pero la API espera booleano JSON
+    "! genuino sin comillas para las propiedades Edm.Boolean. Se aplica
+    "! al JSON de SALIDA (request), no al de entrada (response).
+    CLASS-METHODS unquote_json_booleans
+      IMPORTING iv_json          TYPE string
+      RETURNING VALUE(rv_json)   TYPE string.
+
     CLASS-METHODS create_json
       IMPORTING it_pricingcndnrecdscale   TYPE tt_pricingcndnrecdscale OPTIONAL
                 it_recdsuplmntprcgcndn    TYPE tt_recdsuplmntprcgcndn OPTIONAL
@@ -220,6 +228,8 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       compress     = abap_true
       pretty_name  = /ui2/cl_json=>pretty_mode-camel_case
       name_mappings = lt_name_mapping ).
+
+    rv_json_string = unquote_json_booleans( rv_json_string ).
   ENDMETHOD.
 
 
@@ -477,6 +487,20 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       val   = rv_json
       regex = `:\s*false\b`
       with  = `:"false"`
+      occ   = 0 ).
+  ENDMETHOD.
+
+
+  METHOD unquote_json_booleans.
+    rv_json = replace(
+      val   = iv_json
+      regex = `:"true"`
+      with  = `:true`
+      occ   = 0 ).
+    rv_json = replace(
+      val   = rv_json
+      regex = `:"false"`
+      with  = `:false`
       occ   = 0 ).
   ENDMETHOD.
 

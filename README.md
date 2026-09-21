@@ -222,3 +222,21 @@ deserializar (vía regex sobre `:\s*true\b` / `:\s*false\b`). Se aplica
 en ambos puntos de deserialización de `CREATE_INFO_RECORD` (error y
 éxito). `GET_INFO_RECORD_LIST` no lo necesita - usa `SELECT` local, sin
 JSON de por medio.
+
+## Corrección — booleanos con comillas en el JSON de SALIDA (request)
+
+Problema inverso al de la deserialización: los campos ABAP son
+`STRING` con valores `'true'`/`'false'`, así que `/UI2/CL_JSON=>SERIALIZE`
+los entrecomilla en el JSON de salida (`"InvoiceIsGoodsReceiptBased":"true"`),
+pero la API espera un booleano JSON genuino sin comillas ahí
+(confirmado por la prueba real anterior que sí funcionó con `true` sin
+comillas).
+
+Se agregó `UNQUOTE_JSON_BOOLEANS` (inverso de `SANITIZE_JSON_BOOLEANS`),
+aplicado al final de `CREATE_JSON` sobre el JSON ya serializado, antes
+de devolverlo. Resumen de los dos sanitizadores:
+- `SANITIZE_JSON_BOOLEANS`: JSON de entrada (response) → entrecomilla
+  `true`/`false` crudos para que encajen en campos `STRING` al
+  deserializar.
+- `UNQUOTE_JSON_BOOLEANS`: JSON de salida (request) → quita comillas a
+  `"true"`/`"false"` para que la API los reciba como booleano real.
