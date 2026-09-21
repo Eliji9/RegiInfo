@@ -8,23 +8,25 @@ antes hecho vía ME12/`ZMM_CHANGE_CONDITION_INFO`.
 ## Objeto
 
 - `src/zcl_api_pur_info_record.clas.abap` — clase única y consolidada
-  (decisión explícita: sin wrapper interfaz/factory separado) con:
-  - Resolución del destino SM59 `S4_REG_INFO` (método privado
-    `GET_DESTINATION`, vía `CL_OUTBOUND_PROVIDER_HTTP`)
-  - Cliente HTTP con ciclo CSRF para OData V2 (métodos privados
-    `HTTP_GET` / `HTTP_POST` / `HTTP_PATCH`)
-  - Lógica de negocio: `CREATE_JSON`, `CREATE_INFO_RECORD`,
-    `GET_INFO_RECORD_LIST`, `EXISTS_INFO_RECORD`, `UPDATE_INFO_RECORD`
-    contra `API_INFORECORD_PROCESS_SRV`
+  (sin wrapper interfaz/factory separado). Usa `ZCL_API_REQUEST`
+  (clase genérica ya existente en el sistema: `POST_API_SERVICE`,
+  `PATCH_API_SERVICE`, `DELETE_API_SERVICE`, resuelve destino SM59
+  internamente vía `IV_DESTINATION`) para toda la comunicación HTTP.
+  Métodos: `CREATE_JSON`, `CREATE_INFO_RECORD`, `GET_INFO_RECORD_LIST`
+  (consulta local vía CDS, ya que `ZCL_API_REQUEST` no expone GET),
+  `EXISTS_INFO_RECORD`, `UPDATE_INFO_RECORD`.
 
-## Nota de compliance ABAP Cloud
+## Nota importante sobre GET_INFO_RECORD_LIST
 
-`GET_DESTINATION` llama a `CL_OUTBOUND_PROVIDER_HTTP=>create_by_destination()`,
-API no liberada para ABAP for Cloud Development. Al no usarse el patrón
-de wrapper formal (interfaz + factory liberadas / implementación sin
-liberar), esta clase requiere una **exención de ATC** sobre esa llamada
-puntual para pasar el chequeo "Cloud Development" — marcado con `"#EC`
-en el código como placeholder del pragma real.
+El `RETURNING` visto en el sistema real está tipado como
+`TY_UPDATE_INFO_RECORD` (estructura única) — no puede ser correcto para
+un método que devuelve una "lista". Se corrigió en este archivo a una
+tabla de `TY_INFO_RECORD`; falta aplicar esa corrección en el sistema.
+
+También se detectó, en el cuerpo actual de `GET_INFO_RECORD_LIST` en el
+sistema, lógica de creación (POST + `IF lv_status = 201` +
+`"Purchase Order created"`) que no corresponde a ese método — revisar
+si es código de otro objeto pegado como plantilla.
 
 ## Pendiente de verificar en sistema real
 
@@ -33,3 +35,6 @@ en el código como placeholder del pragma real.
   `PURCHASINGINFORECORD`/`PURCHASINGORGANIZATION`/`PLANT`).
 - Sintaxis exacta de navegación de `XCO_CP_JSON` para parsear la
   respuesta OData V2 (envuelta en `{"d": {...}}`).
+- Valores reales de `C_URI_HEADER` / `C_URI_ORG_PLANT` (ya existentes
+  en la clase; se asume que apuntan a `A_PurchasingInfoRecord` y
+  `A_PurgInfoRecdOrgPlantData` respectivamente).
