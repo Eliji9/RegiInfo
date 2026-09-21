@@ -53,10 +53,16 @@ compras `CRC`, cantidad estándar `1`, plazo entrega `7` días, moneda
   "PurchasingInfoRecordCategory": "0",
   "PurchasingGroup": "CRC",
   "StandardPurchaseOrderQuantity": "1",
+  "PurgDocOrderQuantityUnit": "<UM base del material 300145 - ver MM03/MARA-MEINS>",
   "MaterialPlannedDeliveryDurn": "7",
   "Currency": "CRC"
 }
 ```
+**Nota:** el campo `PurgDocOrderQuantityUnit` es obligatorio en la
+práctica aunque no aparezca marcado como `Required` en el metadata -
+sin él, el servicio devuelve `500` / código `06/340`
+("compruebe las unidades de medida y el factor de conversión"),
+confirmado en prueba real (ver bitácora al final del archivo).
 
 **Si falla** (algunos servicios exigen cabecera primero), probar en dos
 pasos:
@@ -138,3 +144,16 @@ asignado, `lt_error` vacío.
 
 Reemplazar este bloque con el status/body real que devuelva cada paso
 al ejecutarlo, para dejar registro de qué quedó validado y qué no.
+
+
+## Bitácora de resultados reales
+
+### Paso 2 (POST crear) - intento 1
+- **Resultado:** `500 Internal Server Error`
+- **Código:** `06/340`
+- **Mensaje:** "Por favor, compruebe las unidades de medida y el factor de conversión"
+- **Componente:** MM-PUR-VM-REC
+- **Causa:** faltaba `PurgDocOrderQuantityUnit` en el body (se envió
+  `StandardPurchaseOrderQuantity` sin su unidad de medida).
+- **Siguiente intento:** repetir con `PurgDocOrderQuantityUnit` seteado
+  a la UM base real del material `300145`.

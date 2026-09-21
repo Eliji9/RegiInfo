@@ -169,6 +169,7 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       ( abap = 'TAXCODE'                     json = 'TaxCode' )
       ( abap = 'CURRENCY'                    json = 'Currency' )
       ( abap = 'PURCHASINGGROUP'             json = 'PurchasingGroup' )
+      ( abap = 'PURGDOCORDERQUANTITYUNIT'    json = 'PurgDocOrderQuantityUnit' )
     ).
     " TODO: extender lt_name_mapping con cualquier otro campo que
     " confirmes necesario para el POST real, siguiendo el mismo patrón.
