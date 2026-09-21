@@ -23,7 +23,7 @@ CLASS zcl_api_pur_info_record DEFINITION
                 it_info_rec_org_plan_data TYPE tt_info_rec_org_plan_data OPTIONAL
                 it_info_rec_text          TYPE tt_info_rec_text OPTIONAL
                 is_update_info_record     TYPE ty_update_info_record
-      EXPORTING ev_purchasinginforecord   TYPE ebeln
+      EXPORTING ev_purchasinginforecord   TYPE infnr
                 ev_po_response            TYPE ty_info_record
       RETURNING VALUE(rt_error)           TYPE tt_error.
 
@@ -52,7 +52,7 @@ CLASS zcl_api_pur_info_record DEFINITION
                 iv_material                    TYPE matnr
                 iv_ekorg                       TYPE ekorg
                 iv_werks                       TYPE werks_d OPTIONAL
-      RETURNING VALUE(rv_purchasinginforecord) TYPE ebeln.
+      RETURNING VALUE(rv_purchasinginforecord) TYPE infnr.
 
     CLASS-METHODS update_info_record
       IMPORTING iv_purchasinginforecord TYPE string
@@ -79,7 +79,7 @@ CLASS zcl_api_pur_info_record DEFINITION
                 iv_aplfz                  TYPE string OPTIONAL
                 iv_netpr                  TYPE string OPTIONAL
                 iv_mwskz                  TYPE string OPTIONAL
-      EXPORTING ev_purchasinginforecord   TYPE ebeln
+      EXPORTING ev_purchasinginforecord   TYPE infnr
                 ev_created                TYPE abap_bool
       RETURNING VALUE(rt_error)           TYPE tt_error.
 
@@ -89,7 +89,7 @@ CLASS zcl_api_pur_info_record DEFINITION
     "! TY_INFO_RECORD es anidado (org/planta va en un array interno),
     "! no sirve como destino de un SELECT plano con INTO CORRESPONDING.
     TYPES: BEGIN OF ty_info_record_row,
-             purchasinginforecord        TYPE ebeln,
+             purchasinginforecord        TYPE infnr,
              supplier                    TYPE lifnr,
              material                    TYPE matnr,
              purchasingorganization      TYPE ekorg,
@@ -375,7 +375,7 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       ev_created              = abap_false.
 
       rt_error = update_info_record(
-        iv_purchasinginforecord = lv_existing
+        iv_purchasinginforecord = CONV string( lv_existing )
         iv_ekorg                = iv_ekorg
         iv_werks                = iv_werks
         iv_aplfz                = iv_aplfz

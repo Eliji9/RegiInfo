@@ -89,3 +89,14 @@ tipada toda `TY_UPDATE_INFO_RECORD`), pero `EXISTS_INFO_RECORD` espera
 `LIFNR`/`MATNR`. Se agregó `CONV lifnr(...)` / `CONV matnr(...)` en la
 llamada dentro de `UPSERT_INFO_RECORD` en vez de debilitar el tipado de
 `EXISTS_INFO_RECORD`.
+
+## Corrección — dominio del número de registro info: INFNR, no EBELN
+
+Todas las referencias al "PurchasingInfoRecord" (número de registro
+info de compras) estaban tipadas `EBELN` (dominio de número de pedido)
+como placeholder. Se corrigió a `INFNR` (dominio correcto), alineado
+con lo que ya está tipado así en el sistema real
+(`EXISTS_INFO_RECORD`, `UPSERT_INFO_RECORD`). También se agregó
+`CONV string(...)` en la llamada a `UPDATE_INFO_RECORD` dentro de
+`UPSERT_INFO_RECORD`, mismo patrón que la corrección anterior
+(`IV_PURCHASINGINFORECORD` es `STRING` en `UPDATE_INFO_RECORD`).
