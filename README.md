@@ -68,3 +68,16 @@ del nodo anidado `to_purginforecdorgplantdata`), por lo que el
 Se agregó un tipo propio `TY_INFO_RECORD_ROW` (y su tabla
 `TT_INFO_RECORD_ROW`), plano, solo con los campos que esta consulta
 local trae. `GET_INFO_RECORD_LIST` ahora devuelve `TT_INFO_RECORD_ROW`.
+
+## Nuevo — UPSERT_INFO_RECORD (orquestador check-existencia → create/update)
+
+Replica la lógica del reporte ECC original (`ZMM_BAPI_PO_CREATE`):
+1. `EXISTS_INFO_RECORD` (equivalente a `BAPI_INFORECORD_GETLIST` + SELECT
+   sobre EINE).
+2. Si existe → `UPDATE_INFO_RECORD` (equivalente a `ME_UPDATE_INFORECORD`).
+3. Si no existe → `CREATE_INFO_RECORD` (equivalente a
+   `ME_INITIALIZE_INFORECORD` + `ME_DIRECT_INPUT_INFORECORD` +
+   `ME_POST_INFORECORD`).
+
+Este es el método público a invocar desde el consumidor final en vez de
+llamar `CREATE_INFO_RECORD`/`UPDATE_INFO_RECORD` por separado.

@@ -63,6 +63,26 @@ CLASS zcl_api_pur_info_record DEFINITION
                 iv_mwskz                TYPE string OPTIONAL
       RETURNING VALUE(rt_error)         TYPE tt_error.
 
+    "! Orquestador: replica la lógica del ECC (BAPI_INFORECORD_GETLIST
+    "! + ME_UPDATE_INFORECORD / ME_DIRECT_INPUT_INFORECORD) -
+    "! valida existencia y decide crear o actualizar.
+    CLASS-METHODS upsert_info_record
+      IMPORTING it_pricingcndnrecdscale   TYPE tt_pricingcndnrecdscale OPTIONAL
+                it_recdsuplmntprcgcndn    TYPE tt_recdsuplmntprcgcndn OPTIONAL
+                it_info_rec_prcgcndn      TYPE tt_info_rec_prcgcndn OPTIONAL
+                it_info_rec_prcg_validity TYPE tt_info_rec_prcg_validity OPTIONAL
+                it_info_rec_org_plan_data TYPE tt_info_rec_org_plan_data OPTIONAL
+                it_info_rec_text          TYPE tt_info_rec_text OPTIONAL
+                is_update_info_record     TYPE ty_update_info_record
+                iv_ekorg                  TYPE ekorg
+                iv_werks                  TYPE werks_d OPTIONAL
+                iv_aplfz                  TYPE string OPTIONAL
+                iv_netpr                  TYPE string OPTIONAL
+                iv_mwskz                  TYPE string OPTIONAL
+      EXPORTING ev_purchasinginforecord   TYPE ebeln
+                ev_created                TYPE abap_bool
+      RETURNING VALUE(rt_error)           TYPE tt_error.
+
   PRIVATE SECTION.
 
     "! Fila plana para GET_INFO_RECORD_LIST / EXISTS_INFO_RECORD -
@@ -322,6 +342,49 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       APPEND VALUE #( code = 'HTTP_SEND' message = lv_error target = 'HTTP' ) TO rt_error.
     ELSEIF lv_status <> 200 AND lv_status <> 204.
       APPEND VALUE #( code = |HTTP_{ lv_status }| message = lv_response ) TO rt_error.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD upsert_info_record.
+    CLEAR: ev_purchasinginforecord, ev_created, rt_error.
+
+    " 1) Validar existencia - equivalente a BAPI_INFORECORD_GETLIST
+    "    + el SELECT sobre EINE del ECC.
+    DATA(lv_existing) = exists_info_record(
+      iv_supplier = is_update_info_record-supplier
+      iv_material = is_update_info_record-material
+      iv_ekorg    = iv_ekorg
+      iv_werks    = iv_werks ).
+
+    IF lv_existing IS NOT INITIAL.
+      " 2a) Ya existe - equivalente a ME_UPDATE_INFORECORD.
+      ev_purchasinginforecord = lv_existing.
+      ev_created              = abap_false.
+
+      rt_error = update_info_record(
+        iv_purchasinginforecord = lv_existing
+        iv_ekorg                = iv_ekorg
+        iv_werks                = iv_werks
+        iv_aplfz                = iv_aplfz
+        iv_netpr                = iv_netpr
+        iv_mwskz                = iv_mwskz ).
+    ELSE.
+      " 2b) No existe - equivalente a ME_INITIALIZE_INFORECORD +
+      "     ME_DIRECT_INPUT_INFORECORD + ME_POST_INFORECORD.
+      ev_created = abap_true.
+      DATA ls_po_response TYPE ty_info_record.
+
+      rt_error = create_info_record(
+        EXPORTING it_pricingcndnrecdscale   = it_pricingcndnrecdscale
+                  it_recdsuplmntprcgcndn    = it_recdsuplmntprcgcndn
+                  it_info_rec_prcgcndn      = it_info_rec_prcgcndn
+                  it_info_rec_prcg_validity = it_info_rec_prcg_validity
+                  it_info_rec_org_plan_data = it_info_rec_org_plan_data
+                  it_info_rec_text          = it_info_rec_text
+                  is_update_info_record     = is_update_info_record
+        IMPORTING ev_purchasinginforecord   = ev_purchasinginforecord
+                  ev_po_response            = ls_po_response ).
     ENDIF.
   ENDMETHOD.
 
