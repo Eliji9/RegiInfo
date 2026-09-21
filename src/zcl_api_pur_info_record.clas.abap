@@ -159,17 +159,28 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
       APPEND ls_org_plan_json TO ls_info_record-to_purginforecdorgplantdata-results.
     ENDLOOP.
 
+    " Confirmado con prueba real en /IWFND/GW_CLIENT (ver
+    " tests/gw_client_tests.md): deep-insert sobre A_PurchasingInfoRecord
+    " con to_PurgInfoRecdOrgPlantData anidado. NO enviar
+    " OrderItemQtyToBaseQtyNmrtr/Dnmntr - el sistema los deriva solo y
+    " su envío manual provoca el error 06/081 (factor de conversión).
     DATA(lt_name_mapping) = VALUE /ui2/cl_json=>name_mappings(
-      ( abap = 'SUPPLIER'                    json = 'Supplier' )
-      ( abap = 'MATERIAL'                    json = 'Material' )
-      ( abap = 'PURCHASINGORGANIZATION'      json = 'PurchasingOrganization' )
-      ( abap = 'PLANT'                       json = 'Plant' )
-      ( abap = 'MATERIALPLANNEDDELIVERYDURN' json = 'MaterialPlannedDeliveryDurn' )
-      ( abap = 'NETPRICEAMOUNT'              json = 'NetPriceAmount' )
-      ( abap = 'TAXCODE'                     json = 'TaxCode' )
-      ( abap = 'CURRENCY'                    json = 'Currency' )
-      ( abap = 'PURCHASINGGROUP'             json = 'PurchasingGroup' )
-      ( abap = 'PURGDOCORDERQUANTITYUNIT'    json = 'PurgDocOrderQuantityUnit' )
+      ( abap = 'SUPPLIER'                     json = 'Supplier' )
+      ( abap = 'MATERIAL'                     json = 'Material' )
+      ( abap = 'BASEUNIT'                     json = 'BaseUnit' )
+      ( abap = 'PURCHASINGINFORECORD'         json = 'PurchasingInfoRecord' )
+      ( abap = 'PURCHASINGINFORECORDCATEGORY' json = 'PurchasingInfoRecordCategory' )
+      ( abap = 'PURCHASINGORGANIZATION'       json = 'PurchasingOrganization' )
+      ( abap = 'PURCHASINGGROUP'              json = 'PurchasingGroup' )
+      ( abap = 'PLANT'                        json = 'Plant' )
+      ( abap = 'CURRENCY'                     json = 'Currency' )
+      ( abap = 'STANDARDPURCHASEORDERQUANTITY' json = 'StandardPurchaseOrderQuantity' )
+      ( abap = 'MATERIALPLANNEDDELIVERYDURN'  json = 'MaterialPlannedDeliveryDurn' )
+      ( abap = 'INVOICEISGOODSRECEIPTBASED'   json = 'InvoiceIsGoodsReceiptBased' )
+      ( abap = 'TAXCODE'                      json = 'TaxCode' )
+      ( abap = 'NETPRICEAMOUNT'               json = 'NetPriceAmount' )
+      ( abap = 'PURGDOCORDERQUANTITYUNIT'     json = 'PurgDocOrderQuantityUnit' )
+      ( abap = 'TO_PURGINFORECDORGPLANTDATA'  json = 'to_PurgInfoRecdOrgPlantData' )
     ).
     " TODO: extender lt_name_mapping con cualquier otro campo que
     " confirmes necesario para el POST real, siguiendo el mismo patrón.

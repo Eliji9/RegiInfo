@@ -157,3 +157,47 @@ al ejecutarlo, para dejar registro de qué quedó validado y qué no.
   `StandardPurchaseOrderQuantity` sin su unidad de medida).
 - **Siguiente intento:** repetir con `PurgDocOrderQuantityUnit` seteado
   a la UM base real del material `300145`.
+
+### Paso 2 (POST crear) - intento 2 - CONFIRMADO ✅
+
+Endpoint correcto: deep-insert sobre `A_PurchasingInfoRecord` (no POST
+directo a `A_PurgInfoRecdOrgPlantData` - ese endpoint solo no acepta
+creación standalone, confirmado por el error 06/340 persistente en el
+intento anterior).
+
+**Body que llegó a nivel de negocio (ya no de estructura):**
+```json
+{
+  "Supplier": "7102863",
+  "Material": "600037",
+  "BaseUnit": "PI",
+  "to_PurgInfoRecdOrgPlantData": [
+    {
+      "PurchasingInfoRecord": "",
+      "PurchasingInfoRecordCategory": "0",
+      "PurchasingOrganization": "CR01",
+      "PurchasingGroup": "CRC",
+      "Plant": "CR01",
+      "Currency": "CR",
+      "StandardPurchaseOrderQuantity": "1",
+      "MaterialPlannedDeliveryDurn": "2",
+      "InvoiceIsGoodsReceiptBased": true,
+      "TaxCode": "V0"
+    }
+  ]
+}
+```
+
+**Resultado:** `500` / código `06/718` - *"El registro Info de compras
+ya existe..."* (mensaje de negocio, no de estructura). Confirma que el
+body/endpoint son correctos - ese proveedor/material puntual ya tenía
+registro info.
+
+**Clave del fix:** NO enviar `OrderItemQtyToBaseQtyNmrtr` /
+`OrderItemQtyToBaseQtyDnmntr` (el sistema los deriva solo del maestro
+de materiales; enviarlos manualmente disparaba el error `06/081` de
+factor de conversión del intento anterior). `BaseUnit` sí se mantiene,
+a nivel de cabecera.
+
+**Pendiente:** repetir con un proveedor/material que NO tenga registro
+info previo, para confirmar `201 Created` de punta a punta.
