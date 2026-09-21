@@ -107,3 +107,17 @@ Mismo patrón otra vez: `UPSERT_INFO_RECORD` tiene `iv_ekorg`/`iv_werks`
 tipados por dominio (`EKORG`/`WERKS_D`), pero `UPDATE_INFO_RECORD` los
 espera como `STRING`. Se agregó `CONV string(...)` en ambos, en la
 llamada dentro de `UPSERT_INFO_RECORD`.
+
+## Nuevo — soporte para IsDeleted (equivalente al LOEKZ del ECC)
+
+En el ECC, `ME_UPDATE_INFORECORD` limpiaba/marcaba
+`IT_EINA-LOEKZ`/`IT_EINE-LOEKZ` (indicador de borrado) en cada
+actualización. En la API el campo equivalente es `IsDeleted`
+(booleano, en `A_PurgInfoRecdOrgPlantData`).
+
+Se agregó `iv_isdeleted TYPE abap_bool OPTIONAL` a `UPDATE_INFO_RECORD`
+y se propagó a través de `UPSERT_INFO_RECORD`. Solo se envía
+`"IsDeleted": true` en el body cuando se pasa `abap_true` explícito -
+no se manda `false` automáticamente cuando el parámetro simplemente no
+se pasa (`ABAP_BOOL` no distingue "no pasado" de "false": ambos son el
+valor inicial `' '`).

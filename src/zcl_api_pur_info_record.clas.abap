@@ -61,6 +61,7 @@ CLASS zcl_api_pur_info_record DEFINITION
                 iv_aplfz                TYPE string OPTIONAL
                 iv_netpr                TYPE string OPTIONAL
                 iv_mwskz                TYPE string OPTIONAL
+                iv_isdeleted             TYPE abap_bool OPTIONAL
       RETURNING VALUE(rt_error)         TYPE tt_error.
 
     "! Orquestador: replica la lógica del ECC (BAPI_INFORECORD_GETLIST
@@ -79,6 +80,7 @@ CLASS zcl_api_pur_info_record DEFINITION
                 iv_aplfz                  TYPE string OPTIONAL
                 iv_netpr                  TYPE string OPTIONAL
                 iv_mwskz                  TYPE string OPTIONAL
+                iv_isdeleted              TYPE abap_bool OPTIONAL
       EXPORTING ev_purchasinginforecord   TYPE infnr
                 ev_created                TYPE abap_bool
       RETURNING VALUE(rt_error)           TYPE tt_error.
@@ -337,6 +339,13 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
     IF iv_mwskz IS NOT INITIAL.
       APPEND |"TaxCode": "{ iv_mwskz }"| TO lt_field.
     ENDIF.
+    " Equivalente al LOEKZ del ECC (it_eina-loekz / it_eine-loekz) -
+    " en la API es el campo booleano IsDeleted. Solo se envia cuando
+    " se pide explicitamente marcar el borrado (ABAP_BOOL no distingue
+    " "no pasado" de "false", asi que no se manda false automatico).
+    IF iv_isdeleted = abap_true.
+      APPEND |"IsDeleted": true| TO lt_field.
+    ENDIF.
 
     DATA(lv_body) = |\{ { concat_lines_of( table = lt_field sep = `, ` ) } \}|.
 
@@ -380,7 +389,8 @@ CLASS zcl_api_pur_info_record IMPLEMENTATION.
         iv_werks                = CONV string( iv_werks )
         iv_aplfz                = iv_aplfz
         iv_netpr                = iv_netpr
-        iv_mwskz                = iv_mwskz ).
+        iv_mwskz                = iv_mwskz
+        iv_isdeleted             = iv_isdeleted ).
     ELSE.
       " 2b) No existe - equivalente a ME_INITIALIZE_INFORECORD +
       "     ME_DIRECT_INPUT_INFORECORD + ME_POST_INFORECORD.
